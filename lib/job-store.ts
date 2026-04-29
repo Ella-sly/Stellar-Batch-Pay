@@ -105,10 +105,12 @@ function rowToJobState(row: JobRow): JobState {
 
 /**
  * Create a new job and return its ID.
+ * #300: Supports both payment-based (server-side signed) and pre-signed transaction modes.
  */
 export function createJob(
   payments: PaymentInstruction[],
   network: "testnet" | "mainnet",
+  signedTransactions?: string[],
 ): string {
   const db = getDb();
   const jobId = crypto.randomUUID();
