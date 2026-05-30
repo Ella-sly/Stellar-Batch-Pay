@@ -71,6 +71,18 @@ function getDb(): Database.Database {
 
     -- Index for history queries ordered by creation time
     CREATE INDEX IF NOT EXISTS idx_jobs_createdAt ON jobs (createdAt DESC);
+
+    CREATE TABLE IF NOT EXISTS webhook_deliveries (
+      id           TEXT PRIMARY KEY,
+      webhook_id   TEXT NOT NULL,
+      job_id       TEXT,
+      event        TEXT NOT NULL,
+      status       TEXT NOT NULL,
+      response_code INTEGER,
+      retry_count  INTEGER NOT NULL DEFAULT 0,
+      error        TEXT,
+      createdAt    TEXT NOT NULL
+    );
   `);
 
   const columns = _db.prepare("PRAGMA table_info(jobs)").all() as Array<{ name: string }>;
@@ -243,6 +255,35 @@ export function getAllJobs(opts?: {
     .all(...params) as JobRow[];
 
   return rows.map(rowToJobState);
+}
+
+/**
+ * Log a webhook delivery attempt to the webhook_deliveries table.
+ */
+export function logWebhookDelivery(entry: {
+  webhookId: string;
+  jobId?: string;
+  event: string;
+  status: "success" | "failed";
+  responseCode?: number;
+  retryCount: number;
+  error?: string;
+}): void {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO webhook_deliveries (id, webhook_id, job_id, event, status, response_code, retry_count, error, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    crypto.randomUUID(),
+    entry.webhookId,
+    entry.jobId ?? null,
+    entry.event,
+    entry.status,
+    entry.responseCode ?? null,
+    entry.retryCount,
+    entry.error ?? null,
+    new Date().toISOString(),
+  );
 }
 
 /**

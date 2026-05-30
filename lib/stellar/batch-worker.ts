@@ -13,6 +13,7 @@ import { createBatches } from "./batcher";
 import type { PaymentInstruction, BatchResult, PaymentResult } from "./types";
 import { Horizon, TransactionBuilder } from "stellar-sdk";
 import { sumStellarAmounts, formatStellarAmount } from "./utils";
+import { triggerWebhooksWithRetry } from "../webhooks";
 
 /**
  * Process a batch job in the background. This function must NOT be awaited
@@ -133,6 +134,13 @@ export async function processJobInBackground(
           },
         },
       });
+      void triggerWebhooksWithRetry("batch.completed", {
+        jobId,
+        batchId: `batch-${Date.now()}`,
+        network,
+        summary: { successful: successCount, failed: failCount },
+        totalRecipients: payments.length > 0 ? payments.length : xdrs.length,
+      }, jobId);
       return;
     }
 
@@ -202,10 +210,22 @@ export async function processJobInBackground(
       status: "completed",
       result: finalResult,
     });
+    void triggerWebhooksWithRetry("batch.completed", {
+      jobId,
+      batchId: finalResult.batchId,
+      network,
+      summary: finalResult.summary,
+      totalRecipients: finalResult.totalRecipients,
+    }, jobId);
   } catch (error) {
     updateJob(jobId, {
       status: "failed",
       error: error instanceof Error ? error.message : "Unknown worker error",
     });
+    void triggerWebhooksWithRetry("batch.failed", {
+      jobId,
+      network,
+      error: error instanceof Error ? error.message : "Unknown worker error",
+    }, jobId);
   }
 }

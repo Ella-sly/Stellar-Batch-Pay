@@ -148,3 +148,108 @@ export async function triggerWebhooks(eventName: string, payload: any) {
 
   return results;
 }
+
+const MAX_RETRIES = 4;
+const BASE_DELAY_MS = 500;
+
+/**
+ * Deliver a webhook event to all matching registrations with exponential backoff
+ * on 5xx / network errors. Logs each attempt to the webhook_deliveries table.
+ */
+export async function triggerWebhooksWithRetry(
+  eventName: string,
+  payload: any,
+  jobId?: string,
+): Promise<void> {
+  // Lazy import to avoid circular dependency at module load time
+  const { logWebhookDelivery } = await import("./job-store");
+
+  const targets = webhooks.filter(
+    (w) => w.events.includes(eventName) || w.events.includes("*"),
+  );
+
+  await Promise.allSettled(
+    targets.map(async (webhook) => {
+      const timestamp = new Date().toISOString();
+      const bodyPayload = { event: eventName, payload, timestamp };
+      const body = JSON.stringify(bodyPayload);
+      const signature = crypto
+        .createHmac("sha256", webhook.secret)
+        .update(body)
+        .digest("hex");
+
+      let attempt = 0;
+      while (attempt <= MAX_RETRIES) {
+        try {
+          const response = await fetch(webhook.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Stellar-Batch-Pay-Event": eventName,
+              "x-webhook-signature": signature,
+            },
+            body,
+          });
+
+          if (response.ok) {
+            logWebhookDelivery({
+              webhookId: webhook.id,
+              jobId,
+              event: eventName,
+              status: "success",
+              responseCode: response.status,
+              retryCount: attempt,
+            });
+            return;
+          }
+
+          // 4xx — don't retry
+          if (response.status < 500) {
+            logWebhookDelivery({
+              webhookId: webhook.id,
+              jobId,
+              event: eventName,
+              status: "failed",
+              responseCode: response.status,
+              retryCount: attempt,
+              error: `HTTP ${response.status}`,
+            });
+            return;
+          }
+
+          // 5xx — fall through to retry
+          if (attempt === MAX_RETRIES) {
+            logWebhookDelivery({
+              webhookId: webhook.id,
+              jobId,
+              event: eventName,
+              status: "failed",
+              responseCode: response.status,
+              retryCount: attempt,
+              error: `HTTP ${response.status} after ${attempt} retries`,
+            });
+            return;
+          }
+        } catch (err) {
+          if (attempt === MAX_RETRIES) {
+            logWebhookDelivery({
+              webhookId: webhook.id,
+              jobId,
+              event: eventName,
+              status: "failed",
+              retryCount: attempt,
+              error: err instanceof Error ? err.message : "Unknown error",
+            });
+            return;
+          }
+        }
+
+        // Exponential backoff: 500ms, 1s, 2s, 4s
+        await new Promise((r) =>
+          setTimeout(r, BASE_DELAY_MS * Math.pow(2, attempt)),
+        );
+        attempt++;
+      }
+    }),
+  );
+}
