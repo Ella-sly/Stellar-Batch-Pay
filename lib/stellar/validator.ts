@@ -167,8 +167,15 @@ export function validateBatchConfig(config: BatchConfig): {
     };
   }
 
-  if (config.network !== "testnet" && config.network !== "mainnet") {
-    return { valid: false, error: "network must be 'testnet' or 'mainnet'" };
+  if (
+    config.network !== "testnet" &&
+    config.network !== "mainnet" &&
+    config.network !== "futurenet"
+  ) {
+    return {
+      valid: false,
+      error: "network must be 'testnet', 'mainnet', or 'futurenet'",
+    };
   }
 
   if (!config.secretKey || typeof config.secretKey !== "string") {
