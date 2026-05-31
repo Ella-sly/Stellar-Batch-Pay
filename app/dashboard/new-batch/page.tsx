@@ -12,9 +12,8 @@ import { CsvValidationErrors } from "@/components/csv-validation-errors";
 import { JobProgress } from "@/components/job-progress";
 // import { ResultsDisplay } from "@/components/results-display";
 import { useWallet } from "@/contexts/WalletContext";
-import { parsePaymentFile } from "@/lib/stellar/parser";
-import { getBatchSummary } from "@/lib/stellar/summary";
-
+import { parsePaymentFile, getBatchSummary } from "@/lib/stellar";
+import { validatePaymentInstructions } from "@/lib/stellar/validator";
 import type {
   ParsedPaymentFile,
   BatchResult,
@@ -328,6 +327,13 @@ export default function NewBatchPaymentPage() {
       return;
     }
 
+    const validation = validatePaymentInstructions(manualPayments);
+    if (!validation.valid) {
+      const firstError = validation.errors.values().next().value;
+      toast.error(firstError ?? "Please fix invalid recipient rows before continuing");
+      return;
+    }
+
     const parsed = analyzeParsedPayments(manualPayments);
     setValidationResult(parsed);
     setValidationError("");
@@ -385,12 +391,12 @@ export default function NewBatchPaymentPage() {
                 className="flex flex-col items-center gap-2 bg-[#0B0F1A] px-2 md:px-4"
               >
                 <button
-                  disabled={
-                    step < s.id && s.id > 1 && (!validationResult || !summary)
-                  }
-                  onClick={() => setStep(s.id)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors border-2 outline-hidden disabled:cursor-not-allowed ${
-                    step > s.id
+                  type="button"
+                  aria-label={`Step ${s.id}: ${s.name}`}
+                  aria-current={step === s.id ? "step" : undefined}
+                  disabled={!canNavigateToStep(s.id)}
+                  onClick={() => handleStepClick(s.id)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors border-2 outline-hidden disabled:cursor-not-allowed ${step > s.id
                       ? "bg-emerald-500 border-emerald-500 text-white cursor-pointer hover:bg-emerald-600"
                       : step === s.id
                         ? "bg-[#0B0F1A] border-emerald-500 text-emerald-500"
@@ -488,13 +494,14 @@ export default function NewBatchPaymentPage() {
                       <ManualBatchEntry
                         initialPayments={manualPayments}
                         onPaymentsChange={setManualPayments}
+                        onCanContinueChange={setManualCanContinue}
                       />
                     </CardContent>
                   </Card>
                   <div className="flex justify-end pt-4">
                     <Button
                       onClick={handleManualContinue}
-                      disabled={manualPayments.length === 0}
+                      disabled={!manualCanContinue}
                       className="bg-emerald-500 hover:bg-emerald-600 text-white w-full sm:w-auto px-8"
                     >
                       Continue to Validation
