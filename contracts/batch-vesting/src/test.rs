@@ -2547,6 +2547,45 @@ fn test_partial_claim_zero_amount_fails() {
     client.claim(&recipient, &0, &0);
 }
 
+// ── #398: claim_all uses checked arithmetic on released_amount ──────────────
+
+/// Verify that claim_all with a near-i128::MAX schedule does not overflow.
+/// The fix replaces `released_amount += claimable` with checked_add.
+#[test]
+fn test_claim_all_checked_add_no_overflow() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register_contract(None, BatchVestingContract);
+    let client = BatchVestingContractClient::new(&env, &contract_id);
+
+    let sender = Address::generate(&env);
+    let recipient = Address::generate(&env);
+    let (token, token_admin) = create_token_contract(&env, &Address::generate(&env));
+
+    // Use i64::MAX as a large but safe amount the token contract accepts.
+    let large_amount: i128 = i64::MAX as i128;
+    token_admin.mint(&sender, &large_amount);
+
+    env.ledger().with_mut(|li| li.timestamp = 0);
+    client.deposit(
+        &sender,
+        &Vec::from_array(&env, [token.address.clone()]),
+        &Vec::from_array(&env, [recipient.clone()]),
+        &Vec::from_array(&env, [large_amount]),
+        &0,
+        &1000,
+        &0,
+        &0,
+        &Vec::from_array(&env, [String::from_str(&env, "")]),
+    );
+
+    // Advance past end_time so the full amount is claimable.
+    env.ledger().with_mut(|li| li.timestamp = 1001);
+    client.claim_all(&recipient);
+    assert_eq!(token.balance(&recipient), large_amount);
+}
+
 // ── #299/#303: Arithmetic safety in calculate_vested_amount ──────────────────
 
 /// Verify that step-based vesting with maximum i128 total_amount does not
