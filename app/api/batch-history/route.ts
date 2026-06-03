@@ -49,7 +49,8 @@ export async function GET(request: NextRequest) {
 
   const validStatuses: JobStatus[] = ["queued", "processing", "completed", "failed"];
   const status  = validStatuses.includes(rawStatus as JobStatus) ? (rawStatus as JobStatus) : undefined;
-  const network = rawNetwork === "testnet" || rawNetwork === "mainnet" ? rawNetwork : undefined;
+  const network: "testnet" | "mainnet" | undefined =
+    rawNetwork === "testnet" || rawNetwork === "mainnet" ? rawNetwork : undefined;
 
   try {
     const filters = { status, network, publicKey, search, from, to };

@@ -304,7 +304,7 @@ export function validateBalances(
   // Calculate XLM reserves
   const finalOps = estimatedOperations !== undefined
     ? estimatedOperations
-    : Math.ceil(instructions.length / maxOperationsPerTransaction) * maxOperationsPerTransaction;
+    : Math.max(instructions.length, 1);
 
   const transactionFees = finalOps * FEE_PER_OPERATION_XLM;
   const xlmReserved = BASE_RESERVE_XLM + transactionFees;

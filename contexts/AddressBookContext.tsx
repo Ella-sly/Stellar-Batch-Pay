@@ -12,7 +12,7 @@ import {
 } from "@/lib/address-book-storage";
 
 // Re-export Contact type for backwards compatibility
-export { Contact };
+export type { Contact };
 
 export interface AddressBookEntry {
     address: string;

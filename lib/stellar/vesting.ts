@@ -48,7 +48,7 @@ function assetToTokenAddress(asset: string, network: Network): string {
       case "testnet":
         return "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"; // testnet
       case "mainnet":
-        return "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4"; // mainnet
+        return "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA";
       case "futurenet":
         return "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"; // futurenet (same as testnet)
     }
@@ -120,7 +120,7 @@ export async function buildDepositTransaction(
   const release = acquireGuard(publicKey, "deposit");
   try {
     const networkPassphrase =
-      network === "mainnet" ? Networks.PUBLIC : network === "futurenet" ? Networks.FUTURENET : Networks.TESTNET;
+      network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
     const rpcUrl = SOROBAN_RPC_URLS[network];
 
     // Dynamically import rpc to keep this tree-shakeable
@@ -234,7 +234,7 @@ export async function buildBumpInstanceTtlTransaction(
   publicKey: string,
 ): Promise<string> {
   const networkPassphrase =
-    network === "mainnet" ? Networks.PUBLIC : network === "futurenet" ? Networks.FUTURENET : Networks.TESTNET;
+    network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
   const rpcUrl = SOROBAN_RPC_URLS[network];
 
   const { rpc: SorobanRpc } = await import("stellar-sdk");
@@ -304,7 +304,7 @@ export async function buildBumpVestingTtlTransaction(
   publicKey: string,
 ): Promise<string> {
   const networkPassphrase =
-    network === "mainnet" ? Networks.PUBLIC : network === "futurenet" ? Networks.FUTURENET : Networks.TESTNET;
+    network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
   const rpcUrl = SOROBAN_RPC_URLS[network];
 
   const { rpc: SorobanRpc } = await import("stellar-sdk");

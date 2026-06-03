@@ -154,6 +154,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (job.network !== "testnet" && job.network !== "mainnet") {
+            return NextResponse.json(
+                { error: "Retry is only supported on testnet and mainnet" },
+                { status: 400 },
+            );
+        }
+
         const retryJobId = createJob(failedPayments, job.network, job.publicKey);
         void processJobInBackground(retryJobId, failedPayments, job.network, secretKey, undefined, requestId || undefined);
 

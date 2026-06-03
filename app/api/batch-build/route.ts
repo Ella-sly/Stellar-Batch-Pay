@@ -23,8 +23,8 @@ import { horizonUrl } from "@/lib/stellar/network-config";
 import {
   createBatches,
   estimateBatchTransactionSize,
-  parseAsset,
 } from "@/lib/stellar/batcher";
+import { parseAsset } from "@/lib/stellar/utils";
 import {
   validatePaymentInstruction,
   validatePaymentInstructions,

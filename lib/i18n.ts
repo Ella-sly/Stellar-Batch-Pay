@@ -18,11 +18,12 @@ export function t<K extends string>(path: K, params?: Record<string, string | nu
 
   if (typeof value !== "string") return path;
 
+  let result = value;
   if (params) {
     for (const [k, v] of Object.entries(params)) {
-      value = value.replace(`{${k}}`, String(v));
+      result = result.replace(`{${k}}`, String(v));
     }
   }
 
-  return value;
+  return result;
 }

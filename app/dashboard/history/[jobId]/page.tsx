@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useWallet } from "@/contexts/WalletContext";
 import {
   buildBatchExportRows,
   toBatchExportCsv,
@@ -23,6 +22,11 @@ import {
   mapBatchStatusToDetailView,
   type BatchDetailView,
 } from "@/lib/dashboard/batch-detail";
+
+interface JobStatusResponse {
+  status: string;
+  summary?: { successful?: number; failed?: number };
+}
 
 function explorerUrl(hash: string, network: "testnet" | "mainnet"): string {
   const base =
@@ -61,6 +65,9 @@ export default function BatchDetailPage({
   const router = useRouter();
   const { publicKey } = useWallet();
   const [retrying, setRetrying] = useState(false);
+  const [retryJobId, setRetryJobId] = useState<string | null>(null);
+  const [retryPollError, setRetryPollError] = useState<string | null>(null);
+  const [retryJobData, setRetryJobData] = useState<JobStatusResponse | null>(null);
 
   const { data, error, isLoading } = useQuery({
     queryKey: ["job", jobId, publicKey],

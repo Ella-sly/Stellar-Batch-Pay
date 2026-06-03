@@ -7,7 +7,7 @@ import {
   removeContactById,
 } from '@/lib/address-book-storage';
 
-export { Contact };
+export type { Contact };
 
 export function useAddressBook() {
   const [contacts, setContacts] = useState<Contact[]>([]);

@@ -10,6 +10,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import type { PaymentInstruction } from "@/lib/stellar/types";
 import { buildDepositTransaction } from "@/lib/stellar/vesting";
+import { Networks, TransactionBuilder } from "stellar-sdk";
 import { t } from "@/lib/i18n";
 
 interface VestingSchedule {
@@ -137,31 +138,33 @@ export default function VestingPage() {
         : Math.floor(Date.now() / 1000) + 7776000;
 
       const vestingStep = parseInt(vestingConfig.vestingStep);
+      const cliffTime = startTime;
 
       const contractId = "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4";
 
-      // Build unsigned Soroban deposit transaction
       const unsignedXdr = await buildDepositTransaction(
         contractId,
         payments,
         startTime,
         endTime,
+        cliffTime,
         vestingStep,
         network,
         publicKey,
       );
 
-      // Sign via wallet
       const signedXdr = await signTx(unsignedXdr, network);
 
-      // Submit to Soroban RPC
       const { rpc: SorobanRpc } = await import("stellar-sdk");
       const rpcUrl = network === "testnet"
         ? "https://soroban-testnet.stellar.org"
         : "https://soroban-mainnet.stellar.org";
       const server = new SorobanRpc.Server(rpcUrl, { allowHttp: false });
 
-      const sendResult = await server.sendTransaction(signedXdr);
+      const networkPassphrase =
+        network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+      const tx = TransactionBuilder.fromXDR(signedXdr, networkPassphrase);
+      const sendResult = await server.sendTransaction(tx);
 
       if (sendResult.status === "PENDING" || sendResult.status === "DUPLICATE") {
         const hash = sendResult.hash;
@@ -202,7 +205,7 @@ export default function VestingPage() {
         toast.success(t("vesting.submittedSuccess"));
         setActiveTab("manage");
       } else {
-        throw new Error(`Transaction submission failed: ${sendResult.errorResult?.error ?? "Unknown error"}`);
+        throw new Error(`Transaction submission failed: ${sendResult.status}`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Submission failed";

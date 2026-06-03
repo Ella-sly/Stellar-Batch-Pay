@@ -13,7 +13,7 @@ export function validateManualAddress(address: string): string | undefined {
 }
 
 export function rowHasContent(row: Partial<PaymentInstruction>): boolean {
-  return Boolean(row.address?.trim() || row.amount?.trim() || row.asset?.trim());
+  return Boolean(row.address?.trim() || row.amount?.trim());
 }
 
 export function getValidManualPayments(

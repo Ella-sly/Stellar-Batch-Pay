@@ -8,6 +8,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { AddressBookProvider } from "@/contexts/AddressBookContext";
 import { NetworkWarning } from "@/components/network-warning";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/components/query-provider";
 import { siteDescription, siteName, titleTemplate, shareImage } from "@/lib/seo";
 import "./globals.css";
 
@@ -83,10 +84,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <WalletProvider expectedNetwork="testnet">
-            <AddressBookProvider>
-              {children}
-              <NetworkWarning />
-            </AddressBookProvider>
+            <QueryProvider>
+              <AddressBookProvider>
+                {children}
+                <NetworkWarning />
+              </AddressBookProvider>
+            </QueryProvider>
           </WalletProvider>
           <Toaster />
           <ConditionalAnalytics />

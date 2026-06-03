@@ -27,7 +27,11 @@ interface ManualBatchEntryProps {
   onCanContinueChange?: (canContinue: boolean) => void;
 }
 
-export function ManualBatchEntry({ initialPayments, onPaymentsChange }: ManualBatchEntryProps) {
+export function ManualBatchEntry({
+  initialPayments,
+  onPaymentsChange,
+  onCanContinueChange,
+}: ManualBatchEntryProps) {
   const [rows, setRows] = useState<Partial<PaymentInstruction>[]>(() => {
     if (initialPayments && initialPayments.length > 0) {
       return initialPayments;

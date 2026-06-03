@@ -48,7 +48,6 @@ export function useDashboardMetrics(
     queryFn: () => fetchDashboardMetrics(publicKey!, network, range),
     enabled: !!publicKey,
     staleTime: 30 * 1000,
-    placeholderData: () => null,
   });
 
   const fallbackMetrics: DashboardMetrics = {

@@ -13,8 +13,9 @@ import {
 } from "stellar-sdk";
 import Big from "big.js";
 
-import { PaymentInstruction, Asset } from "./types";
+import { PaymentInstruction } from "./types";
 import { getRecommendedFee } from "./fee-service";
+import { parseAsset } from "./utils";
 export { getBatchSummary } from "./summary";
 
 export interface Batch {
@@ -217,22 +218,4 @@ export async function createBatches(
   }
 
   return batches;
-}
-
-/**
- * Parse asset string to code and issuer
- */
-export function parseAsset(assetString: string): Asset {
-  if (assetString === "XLM") {
-    return {
-      code: "XLM",
-      issuer: null,
-    };
-  }
-
-  const [code, issuer] = assetString.split(":");
-  return {
-    code,
-    issuer,
-  };
 }

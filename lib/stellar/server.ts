@@ -45,6 +45,9 @@ export class StellarService {
     }
 
     this.keypair = Keypair.fromSecret(config.secretKey);
+    if (config.network !== "testnet" && config.network !== "mainnet") {
+      throw new Error("StellarService only supports testnet and mainnet");
+    }
     this.network = config.network;
     this.maxOperationsPerTransaction = config.maxOperationsPerTransaction;
 
