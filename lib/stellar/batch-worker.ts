@@ -249,5 +249,10 @@ export async function processJobInBackground(
       status: "failed",
       error: error instanceof Error ? error.message : "Unknown worker error",
     });
+    void triggerWebhooksWithRetry("batch.failed", {
+      jobId,
+      network,
+      error: error instanceof Error ? error.message : "Unknown worker error",
+    }, jobId);
   }
 }
