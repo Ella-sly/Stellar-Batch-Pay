@@ -278,44 +278,40 @@ vercel --prod
 
 ### Option 2: Docker Container
 
-For flexibility and multi-platform deployment:
+For flexibility and multi-platform deployment, use the committed
+[`Dockerfile`](../Dockerfile) at the repo root. It is a multi-stage build
+based on `node:22-alpine` that:
 
 ```dockerfile
 FROM node:22-alpine
 
-WORKDIR /app
+The accompanying `.dockerignore` keeps `node_modules`, `.next`,
+`contracts/target`, `.env*`, and `data/` out of the build context.
 
-# Copy files
-COPY package*.json ./
-COPY . .
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Build
-RUN npm run build
-
-# Set environment
-ENV NODE_ENV=production
-ENV STELLAR_SECRET_KEY=${STELLAR_SECRET_KEY}
-
-# Expose port
-EXPOSE 3000
-
-# Start
-CMD ["npm", "start"]
-```
-
-**Build and push:**
+**Build:**
 ```bash
 docker build -t stellar-bulk-pay:latest .
+```
+
+**Run locally:**
+```bash
+docker run --rm -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e STELLAR_SECRET_KEY="$STELLAR_SECRET_KEY" \
+  -v "$(pwd)/data:/app/data" \
+  stellar-bulk-pay:latest
+```
+
+**Push:**
+```bash
 docker tag stellar-bulk-pay:latest myregistry/stellar-bulk-pay:latest
 docker push myregistry/stellar-bulk-pay:latest
 ```
 
 **Deploy to container service:**
-- AWS ECS
-- Google Cloud Run
+- AWS ECS — mount an EFS volume at `/app/data` if you need durable SQLite.
+- Google Cloud Run — pair with a managed database, or accept that
+  `data/` resets on each container instance.
 - Azure Container Instances
 
 ### Option 3: Traditional VPS

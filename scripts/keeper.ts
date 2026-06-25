@@ -128,6 +128,7 @@ async function main() {
   console.log("Starting Keeper Bot...");
   console.log(`Contract: ${CONTRACT_ID}`);
   console.log(`Keeper: ${keeperKeypair.publicKey()}`);
+  console.log(`Bump threshold: ${BUMP_THRESHOLD_DAYS} day(s) (${BUMP_THRESHOLD_LEDGERS} ledgers)`);
 
   const state = await loadState();
 
@@ -152,7 +153,7 @@ async function main() {
     // 2. Maintain contract instance
     await maintainInstance(server, contract, keeperKeypair);
 
-    // 3. Proactive balance check
+    // 4. Proactive balance check
     await checkBalance(server, keeperKeypair.publicKey());
 
     console.log("Keeper Bot finished successfully.");
